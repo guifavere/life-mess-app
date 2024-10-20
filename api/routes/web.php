@@ -2,6 +2,5 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// auth
+Route::post('login', 'Infra\Http\Controllers\Auth\LoginUserController');
