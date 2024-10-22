@@ -60,6 +60,7 @@ module.exports = {
         "import/resolver": {
           node: {
             extensions: [".ts", ".tsx"],
+            moduleDirectory: ["node_modules", "app/"],
           },
           typescript: {
             alwaysTryTypes: true,
