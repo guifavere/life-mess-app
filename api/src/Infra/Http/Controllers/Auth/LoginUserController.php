@@ -2,7 +2,8 @@
 
 namespace Infra\Http\Controllers\Auth;
 
-use Illuminate\Support\Facades\Auth;
+use Domain\Models\Users\User;
+use Illuminate\Support\Facades\Hash;
 use Infra\Http\Controllers\Controller;
 use Infra\Http\Requests\Auth\LoginUserRequest;
 
@@ -10,14 +11,10 @@ final class LoginUserController extends Controller
 {
     public function __invoke(LoginUserRequest $request)
     {
-        if (! Auth::attempt($request->validated())) {
-            return back()
-                ->withErrors(['email' => 'The provided credentials do not match our records.'])
-                ->onlyInput('email');
-        }
+        $user = User::firstWhere('email', $request->email);
 
-        $request->session()->regenerate();
-
-        return response()->noContent();
+        return ! is_null($user) && Hash::check($request->password, $user->password)
+            ? response()->json(['auth_token' => $user->createToken('auth_token', ['*'], now()->addDay())->plainTextToken])
+            : response()->json(['message' => 'Invalid credentials!'], 400);
     }
 }

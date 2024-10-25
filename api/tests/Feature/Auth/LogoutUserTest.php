@@ -1,14 +1,12 @@
 <?php
 
 use Domain\Models\Users\User;
-use Illuminate\Support\Facades\Auth;
+use Laravel\Sanctum\Sanctum;
 
 test('should logout the user', function () {
-    $user = User::factory()->create();
+    Sanctum::actingAs(User::factory()->create());
 
-    Auth::login($user);
-
-    $response = $this->postJson('logout');
+    $response = $this->postJson('api/logout');
 
     $response->assertNoContent();
 });
