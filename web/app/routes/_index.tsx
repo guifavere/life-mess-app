@@ -1,4 +1,11 @@
-import type { MetaFunction } from "@remix-run/node";
+import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
+import { requireAuth } from "~/features/auth.server";
+
+export const loader = async ({ request }: ActionFunctionArgs) => {
+  await requireAuth(request);
+
+  return {};
+};
 
 export const meta: MetaFunction = () => {
   return [
@@ -32,6 +39,9 @@ export default function Index() {
           <p className="leading-6 text-gray-700 dark:text-gray-200">
             What&apos;s next?
           </p>
+          <form action="/logout" method="post">
+            <button type="submit">logout</button>
+          </form>
           <ul>
             {resources.map(({ href, text, icon }) => (
               <li key={href}>
