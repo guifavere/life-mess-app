@@ -42,9 +42,7 @@ export const meta = () => [{
 export default function Login() {
   const actionData = useActionData<typeof action>();
 
-  const error = actionData !== undefined && 'error' in actionData
-    ? actionData.error
-    : null;
+  const error = typeof actionData?.error === 'string' ? actionData.error : null;
 
   const [form, fields] = useForm({
     onValidate: ({ formData }) => parseWithZod(formData, { schema } ),
