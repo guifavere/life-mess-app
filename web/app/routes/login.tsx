@@ -10,6 +10,9 @@ import { login, requireGuest } from '~/features/auth.server';
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { FormMessage, FormItem } from '~/components/ui/form';
 import { get } from 'lodash-es';
+import { customErrorMap } from '~/utils/form';
+
+z.setErrorMap(customErrorMap);
 
 const schema = z.object({
   email: z.string().email(),
