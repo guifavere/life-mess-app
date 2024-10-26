@@ -15,6 +15,6 @@ final class LoginUserController extends Controller
 
         return ! is_null($user) && Hash::check($request->password, $user->password)
             ? response()->json(['auth_token' => $user->createToken('auth_token', ['*'], now()->addDay())->plainTextToken])
-            : response()->json(['message' => 'Invalid credentials!'], 400);
+            : response()->json(['message' => __('Invalid credentials!')], 400);
     }
 }
