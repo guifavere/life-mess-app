@@ -9,6 +9,7 @@ import { Button } from "~/components/ui/button";
 import { login, requireGuest } from '~/features/auth.server';
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { FormMessage, FormItem } from '~/components/ui/form';
+import { get } from 'lodash-es';
 
 const schema = z.object({
   email: z.string().email(),
@@ -21,7 +22,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const submission = parseWithZod(await request.formData(), { schema });
 
   if (submission.status !== 'success') {
-    return json(submission.reply(), { status: 400 });
+    return json({ submission: submission.reply() }, { status: 400 });
   }
 
   const { redirector, errors } = await login({ request, ...submission.value });
@@ -42,10 +43,11 @@ export const meta = () => [{
 export default function Login() {
   const actionData = useActionData<typeof action>();
 
-  const error = typeof actionData?.error === 'string' ? actionData.error : null;
+  const error = get(actionData, 'error');
 
   const [form, fields] = useForm({
     onValidate: ({ formData }) => parseWithZod(formData, { schema } ),
+    lastResult: get(actionData, 'submission'),
     shouldValidate: 'onSubmit',
     shouldRevalidate: 'onBlur',
   });
@@ -77,6 +79,7 @@ export default function Login() {
         </FormItem>
         <FormItem>
           <Input
+            defaultValue={fields.password.initialValue}
             key={fields.password.key}
             name={fields.password.name}
             placeholder="password"
