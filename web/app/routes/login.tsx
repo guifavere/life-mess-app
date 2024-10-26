@@ -1,23 +1,32 @@
-import { Form, useActionData } from '@remix-run/react';
-
+import { useForm } from '@conform-to/react';
+import { parseWithZod } from '@conform-to/zod';
+import { AlertCircle } from 'lucide-react';
+import { z } from 'zod';
+import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { Form, json, useActionData } from '@remix-run/react';
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
-import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { login, requireGuest } from '~/features/auth.server';
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { FormMessage, FormItem } from '~/components/ui/form';
+
+const schema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+});
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await requireGuest(request);
 
-  const formData = await request.formData();
+  const submission = parseWithZod(await request.formData(), { schema });
 
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
+  if (submission.status !== 'success') {
+    return json(submission.reply(), { status: 400 });
+  }
 
-  const { redirector, errors } = await login({ request, email, password });
+  const { redirector, errors } = await login({ request, ...submission.value });
 
-  return redirector || { error: errors[0] };
+  return redirector || json({ error: errors[0] }, { status: 400 });
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -31,9 +40,17 @@ export const meta = () => [{
 }];
 
 export default function Login() {
-  const data = useActionData<typeof action>();
+  const actionData = useActionData<typeof action>();
 
-  const error = data !== undefined && 'error' in data ? data.error : null;
+  const error = actionData !== undefined && 'error' in actionData
+    ? actionData.error
+    : null;
+
+  const [form, fields] = useForm({
+    onValidate: ({ formData }) => parseWithZod(formData, { schema } ),
+    shouldValidate: 'onSubmit',
+    shouldRevalidate: 'onBlur',
+  });
 
   return (
     <main className="container flex flex-col h-screen justify-center justify-self-center md:max-w-96">
@@ -41,7 +58,7 @@ export default function Login() {
         Login to
         <strong className="block text-gray-800 text-2xl">life mess app</strong>
       </h1>
-      <Form className="flex flex-col gap-y-4" method="post" noValidate>
+      <Form className="flex flex-col gap-y-4" id={form.id} method="post" onSubmit={form.onSubmit} noValidate>
         {error && (
           <Alert variant="destructive">
             <AlertCircle size={24} />
@@ -49,8 +66,26 @@ export default function Login() {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        <Input autoFocus type="email" id="email" name="email" placeholder="email" />
-        <Input type="password" id="password" name="password" placeholder="password" />
+        <FormItem>
+          <Input
+            autoFocus
+            defaultValue={fields.email.initialValue}
+            key={fields.email.key}
+            name={fields.email.name}
+            placeholder="email"
+            type="email"
+          />
+          <FormMessage>{fields.email.errors}</FormMessage>
+        </FormItem>
+        <FormItem>
+          <Input
+            key={fields.password.key}
+            name={fields.password.name}
+            placeholder="password"
+            type="password"
+          />
+          <FormMessage>{fields.password.errors}</FormMessage>
+        </FormItem>
         <Button title="Login" size="lg" type="submit">Login</Button>
       </Form>
     </main>
