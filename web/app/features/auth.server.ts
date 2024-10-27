@@ -48,7 +48,7 @@ export const logout = async (request: Request) => {
 
   const token = session.get('authToken');
 
-  api.post('/logout', {}, { headers: { 'Authorization': `Bearer ${token}` } });
+  await api.post('/logout', {}, { headers: { 'Authorization': `Bearer ${token}` } });
 
   return redirect('/login', {
     headers: { 'Set-Cookie': await storage.destroySession(session) },

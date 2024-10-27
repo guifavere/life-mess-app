@@ -1,5 +1,5 @@
 import axios, { isAxiosError } from 'axios';
-import { redirect } from '@remix-run/react';
+import { redirect } from '@remix-run/node';
 
 interface ErrorResponse {
   data: { message: string; };
