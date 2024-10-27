@@ -1,4 +1,4 @@
-import { createCookieSessionStorage, redirect } from "@remix-run/node";
+import { Session, createCookieSessionStorage, redirect, isSession } from "@remix-run/node";
 
 import { api, isErrorResponse, isErrorResponseWithErrors } from "./api.server";
 
@@ -46,17 +46,21 @@ export const login = async ({ request, email, password }:
 export const logout = async (request: Request) => {
   const session = await storage.getSession(request.headers.get('Cookie'));
 
-  const token = session.get('authToken');
-
-  await api.post('/logout', {}, { headers: { 'Authorization': `Bearer ${token}` } });
+  await api.post(
+    '/logout',
+    {},
+    { headers: { 'Authorization': `Bearer ${getAuthTokenFrom(session)}` } },
+  );
 
   return redirect('/login', {
     headers: { 'Set-Cookie': await storage.destroySession(session) },
   });
 };
 
-export const getAuthTokenFrom = async (request: Request) => {
-  const session = await storage.getSession(request.headers.get('Cookie'));
+export const getAuthTokenFrom = async (requestOrSession: Request | Session) => {
+  const session = isSession(requestOrSession)
+    ? requestOrSession
+    : await storage.getSession(requestOrSession.headers.get('Cookie'));
 
   return session.get('authToken');
 };
@@ -65,9 +69,10 @@ export const getUserFrom = async (request: Request) => {
   const token = await getAuthTokenFrom(request);
 
   try {
-    const { data } = await api.get('/user', {
-      headers: { 'Authorization': `Bearer ${token}` },
-    });
+    const { data } = await api.get(
+      '/user',
+      { headers: { 'Authorization': `Bearer ${token}` } },
+    );
 
     return data;
   } catch (error) {
